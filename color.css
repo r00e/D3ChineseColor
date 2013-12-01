@@ -1,17 +1,9 @@
-.color:hover{
-	position: relative;
-	left:-2px;
-	top:-2px;
-}
-
 body{
 	width: 800px;
 	height: 600px;
 	margin: 4em auto 4em auto;
-	/*background-color: #abcdef*/
 }
 
 svg {
-	/*float: left;*/
-	border: solid 1px #aaa;
+	border: solid 1px #111111;
 }

@@ -1,116 +1,99 @@
 function show(color){
-    var bodyWidth = $("body").width()
-    var bodyHeight = $("body").height()
-    var colorCount = color.member.length;
+    var bodyWidth = $("body").width();
+    var bodyHeight = $("body").height();
     var blockWidth = 50;
-    var blockInnerRectWidth = 48;
-    var blockStrokeWidth = 1
-
-    var svgContainer = d3.select("body")
-                        .append("svg")
-                        .attr("id", "svgContainer")
-    
-    var colorBlock = svgContainer.selectAll("rect");
     var column = bodyWidth/blockWidth;
+    var colorCount = color.member.length;
 
-    for (var i = 0; i < colorCount; i++) {
-        colorBlock.data( [ color.member[i] ], function(c) { return c;} )
-            .enter()
+    var bigSvgContainer = d3.select("body").append("svg");
+    
+    bigSvgContainer
+        .selectAll("rect")
+        .data(d3.range(colorCount)
+                .map(function(d, i){
+                    return {width: blockWidth, colorMember: color.member[i]}
+                }))
+        .enter()
+        .append("rect")
+        .attr("class", "colorBlock")
+        .attr("x", function(d, i){ return (i%column) * blockWidth; })
+        .attr("y", function(d, i){ return parseInt(i/column) * blockWidth; })
+        .attr("width", function(d){ return d.width; })
+        .attr("height", function(d){ return d.width; })
+        .attr("id", function(d, i){ return "rect" + d.colorMember.rgbValue.substr(1) })
+        .style("fill", function(d) { return d.colorMember.rgbValue; })
+        .style("stroke", "#000000")
+        .style("stroke-width", 1);
+    
+    var colorBlocks = d3.selectAll(".colorBlock");
+    colorBlocks.on("click", function(d)
+    {
+        var colorValue = "#" + d3.select("rect#rect" + d.colorMember.rgbValue.substr(1)).attr("id").substr(4);
+
+        bigSvgContainer
             .append("rect")
-            .attr("class", "colorBlock")
-            .attr("width", blockInnerRectWidth)
-            .attr("height", blockInnerRectWidth)
-            .attr("x", function() { 
-                return (i%column) * blockWidth + 1;
-            })
-            .attr("y", function() { 
-                return parseInt(i/column) * blockWidth + 1;
-            })
-            .style("stroke-width", blockStrokeWidth)
-            .style("stroke", "#000000")
-            .style("fill", function(c) { return c.rgbValue;} )
-    };
+                .attr("class", "show")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("width", bodyWidth)
+                .attr("height", bodyHeight)
+                .style("fill", "#000000")
+                .style("opacity", 0)
+                .transition()
+                .style("opacity", 0.7)
+                .duration(1000)
+            .each("end", function(){
+                bigSvgContainer
+                    .append("rect")
+                    .attr("class", "show")
+                    .attr("x", 150)
+                    .attr("y", 150)
+                    .attr("width", 500)
+                    .attr("height", 250)
+                    .style("fill", colorValue)
+                    .style("opacity", 0)
+                    .transition()
+                    .style("opacity", 1)
+                    .duration(1000)
+                .each("end", function(){
+                    bigSvgContainer
+                        .append("text")
+                        .attr("class", "show")
+                        .attr("x", 160)
+                        .attr("y", 180)
+                        .text(function() { return d.colorMember.rgbValue;} )
+                        .attr("font-size", "30px")
+                        .style("fill", function() { return "#" + (Number("0x666666") + Number("0x" + d.colorMember.rgbValue.substr(1))).toString(16).toUpperCase(); });
 
-    var nodeArray = [];
-    for (var i = 0; i < colorCount; i++) {
-        nodeArray.push( {id : i} );
-    };
-
-    var force = d3.layout.force()
-            .nodes(nodeArray)
-            .links([])
-            .gravity(0.05)
-            .charge(-50)
-            .size([bodyWidth, bodyHeight])
-            .start();
-
-
-    var allColorBlocks = d3.selectAll(".colorBlock");
-    allColorBlocks.on("click", function() {
-        d3.selectAll(".colorBlock")
-            .attr("class", "colorBlock showtime");
-    
-        d3.selectAll(".showtime").data(nodeArray).call(force.drag);
-
-        d3.select(this)
-            .transition()
-            .attr("width", bodyWidth)
-            .attr("height", bodyHeight)
-            .attr("x", 50)
-            .attr("y", 50);
+                    bigSvgContainer
+                        .append("foreignObject")
+                        .attr("class", "show")
+                        .attr({width: 440, height:200})
+                        .attr({x:160, y:200})
+                        .append("xhtml:body")
+                        .append("xhtml:div")
+                        .attr("class", "show")
+                        .style({
+                            width: 440 + 'px',
+                            height: 200 + 'px',
+                            "font-size": "15px",
+                            color: function() { return "#" + (Number("0x666666") + Number("0x" + d.colorMember.rgbValue.substr(1))).toString(16).toUpperCase(); }
+                        })
+                        .html( function() { return d.colorMember.description; });
+                });
+            });
     });
-    
-    force.on("tick", function() {
-        d3.selectAll(".showtime").transition().duration(100)
-            .attr("x", function(d) { return d.x; })
-            .attr("y", function(d) { return d.y; });
-    });
 
-
-    // var group = d3.select("body")
-    //     .selectAll("svg")
-    //     .data(d3.range(colorCount)
-    //             .map(function(d, i){
-    //                 return {width: blockWidth, c: color.member[i]}
-    //             }))
-    //     .enter().append("svg")
-    //         .attr("width", blockWidth)
-    //         .attr("height", blockWidth)
-    //         .attr("id", function(d, i){ return "svg" + d.c.rgbValue.substr(1) });
-    
-    // group.append("rect")
-    //     .attr("width", function(d) {return d.width;})
-    //     .attr("height", function(d) {return d.width;})
-    //     .style("fill", function(d) { return d.c.rgbValue; })
-
-    // group.selectAll("rect")
-    //     .on("click", function(d){
-    //         var colorValue = "#" + d3.select("svg#svg" + d.c.rgbValue.substr(1)).attr("id").substr(3);
-
-    //         d3.selectAll("svg").transition().style("opacity", 0).duration(1000).delay(100);
-
-    //         d3.select("body").insert("svg", "svg")
-    //                 .attr("id", "tmp")
-    //                 .attr("width", bodyWidth)
-    //                 .attr("height", bodyHeight)
-    //                 .style("opacity", 0)
-    //                 .append("rect")
-    //                 .attr("width",bodyWidth)
-    //                 .attr("height",bodyHeight)
-    //                 .style("fill", colorValue);
-
-    //         d3.select("svg#tmp").transition().style("opacity", 100).duration(1500).delay(100);
-    //     })
-        // .append("svg")
-        // .append("text")
-        // .text(function(d) { return d.name + ' : ' + d.rgbValue; })
-        // .attr("x", blockWidth/2 - 30)
-        // .attr("y", "50")
-        // .attr("font-size", "10px")
-        // .attr("fill", function(d) { return "#" + (Number("0xFFFFFF") - Number("0x" + d.rgbValue.substr(1))).toString(16).toUpperCase(); });
-
-    // d3.select("body").insert("svg", "div").attr("width", "50").attr("height", "50")
-    //                 .append("rect").attr("x",0).attr("y",0).attr("width", 100).attr("height", 100).attr("fill", "yellow");
+    setInterval(function(){
+        var showRect = bigSvgContainer.selectAll(".show");
+        showRect.on("click", function(){
+            showRect
+                .transition()
+                .style("opacity", 0)
+                .duration(500)
+                .remove();
+        });
+    }, 1000);
 }
 
 var color =
